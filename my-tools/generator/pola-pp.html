@@ -17,13 +17,11 @@
             --text-muted: #94a3b8;
             --btn-hover: #e0a100;
         }
-
         * {
             box-sizing: border-box;
             margin: 0;
             padding: 0;
         }
-
         body {
             background-color: var(--bg-color);
             color: var(--text-light);
@@ -34,7 +32,6 @@
             min-height: 100vh;
             padding: 20px;
         }
-
         .container {
             width: 100%;
             max-width: 650px;
@@ -44,12 +41,10 @@
             padding: 24px;
             box-shadow: 0 8px 32px rgba(255, 183, 3, 0.15);
         }
-
         .header {
             text-align: center;
             margin-bottom: 20px;
         }
-
         .header h1 {
             font-family: 'Teko', sans-serif;
             font-size: 2.2rem;
@@ -58,20 +53,17 @@
             text-transform: uppercase;
             line-height: 1.1;
         }
-
         .header .datetime {
             font-size: 0.95rem;
             color: var(--text-light);
             margin-top: 6px;
             font-weight: bold;
         }
-
         .actions {
             display: flex;
             gap: 12px;
             margin-bottom: 24px;
         }
-
         button {
             flex: 1;
             padding: 12px 16px;
@@ -84,28 +76,23 @@
             transition: all 0.2s ease;
             text-transform: uppercase;
         }
-
         .btn-generate {
             background-color: var(--accent-yellow);
             color: #000;
         }
-
         .btn-generate:hover {
             background-color: var(--btn-hover);
             transform: translateY(-1px);
         }
-
         .btn-copy {
             background-color: transparent;
             color: var(--accent-yellow);
             border: 2px solid var(--accent-yellow);
         }
-
         .btn-copy:hover {
             background-color: rgba(255, 183, 3, 0.1);
             transform: translateY(-1px);
         }
-
         .output-area {
             background-color: #0a0b0e;
             border-radius: 8px;
@@ -118,7 +105,6 @@
             max-height: 550px;
             overflow-y: auto;
         }
-
         .toast {
             position: fixed;
             bottom: 20px;
@@ -134,7 +120,6 @@
             box-shadow: 0 4px 12px rgba(0,0,0,0.5);
             pointer-events: none;
         }
-
         .toast.show {
             transform: translateX(-50%) translateY(0);
         }
@@ -170,16 +155,22 @@
 
     const spinsCountList = [10, 20, 30, 50, 100];
 
+    // Kombinasi pola spin valid (tanpa ❌❌❌)
+    const validSpinPatterns = [
+        "✅❌✅", "✅❌❌",
+        "❌✅✅", "❌✅❌",
+        "❌❌✅"
+    ];
+
     // Mengubah menit ke kelipatan 5 terdekat
     function getFormattedDate() {
         const now = new Date();
         const year = now.getFullYear();
         const month = String(now.getMonth() + 1).padStart(2, '0');
         const date = String(now.getDate()).padStart(2, '0');
-
         let hours = String(now.getHours()).padStart(2, '0');
         let minutes = now.getMinutes();
-        
+                
         // Pembulatan menit ke kelipatan 5
         minutes = Math.round(minutes / 5) * 5;
         if (minutes === 60) {
@@ -199,71 +190,47 @@
         return arr[Math.floor(Math.random() * arr.length)];
     }
 
-    // Konfigurasi Pola Spin (Turbo, Cepat, Lewati Layar)
-    // Tidak boleh 3 ❌ (❌❌❌)
-    function generateSpinPattern() {
-        let pattern = [];
-        do {
-            pattern = [];
-            // Turbo & Cepat Logic
-            const randType = Math.random();
-            if (randType < 0.33) {
-                // Turbo ON, Cepat OFF
-                pattern.push("✅");
-                pattern.push("❌");
-            } else if (randType < 0.66) {
-                // Turbo OFF, Cepat ON
-                pattern.push("❌");
-                pattern.push("✅");
-            } else {
-                // Keduanya OFF
-                pattern.push("❌");
-                pattern.push("❌");
-            }
-
-            // Lewati Layar Logic (Random)
-            pattern.push(Math.random() < 0.5 ? "✅" : "❌");
-
-        } while (pattern.every(val => val === "❌")); // Pastikan tidak ada 3 ❌
-
-        return pattern.join('');
-    }
-
-    // Membuat 1 paket pola (5 baris)
-    function generateSingleGamePattern(gameName) {
-        let lines = [];
-        let usedLines = new Set();
-
-        while (lines.length < 5) {
-            const count = getRandomArrayItem(spinsCountList);
-            const spinPattern = generateSpinPattern();
-
-            // Jenis Spin: AUTO (70%) vs MANUAL (30%)
-            // Jika count >= 50, wajib AUTO
-            let spinType = "AUTO";
-            if (count < 50) {
-                spinType = Math.random() < 0.7 ? "AUTO" : "MANUAL";
-            }
-
-            // DC Boolean: DC OFF (70%) vs DC ON (30%)
-            const dcStatus = Math.random() < 0.7 ? "DC OFF" : "DC ON";
-
-            const lineString = `${count}X ${spinPattern} ${spinType} ${dcStatus}`;
-
-            // Pastikan tidak ada line identik dalam 1 game
-            if (!usedLines.has(lineString)) {
-                usedLines.add(lineString);
-                lines.push(lineString);
-            }
-        }
-
-        return `${gameName.toUpperCase()}\n` + lines.join('\n');
-    }
-
     // Acak N item unik dari array
     function getRandomUniqueItems(arr, num) {
         const shuffled = [...arr].sort(() => 0.5 - Math.random());
         return shuffled.slice(0, num);
+    }
+
+    // Membuat 1 paket pola (5 baris) dengan pola spin yang bervariasi unik
+    function generateSingleGamePattern(gameName) {
+        let lines = [];
+        let usedLines = new Set();
+        
+        // Mengacak urutan 5 pola spin unik agar setiap baris tidak pernah sama
+        const shuffledSpinPatterns = getRandomUniqueItems(validSpinPatterns, 5);
+
+        for (let i = 0; i < 5; i++) {
+            let lineString = "";
+            let attempts = 0;
+
+            do {
+                const count = getRandomArrayItem(spinsCountList);
+                const spinPattern = shuffledSpinPatterns[i];
+
+                // Jenis Spin: AUTO (70%) vs MANUAL (30%)
+                // Jika count >= 50, wajib AUTO
+                let spinType = "AUTO";
+                if (count < 50) {
+                    spinType = Math.random() < 0.7 ? "AUTO" : "MANUAL";
+                }
+
+                // DC Boolean: DC OFF (70%) vs DC ON (30%)
+                const dcStatus = Math.random() < 0.7 ? "DC OFF" : "DC ON";
+
+                lineString = `${count}X ${spinPattern} ${spinType} ${dcStatus}`;
+                attempts++;
+            } while (usedLines.has(lineString) && attempts < 20);
+
+            usedLines.add(lineString);
+            lines.push(lineString);
+        }
+
+        return `${gameName.toUpperCase()}\n` + lines.join('\n');
     }
 
     // Fungsi utama generate 10 pola
